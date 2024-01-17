@@ -1,0 +1,26 @@
+Playing with messed date string like '2023-1-3 AM11:30'; Change them to datetime
+
+with cte as(
+SELECT regexp_extract(Customer_Request_Open_Date , r"[0-9-]+") as cus_request_date,
+regexp_extract(Customer_Request_Open_Date , r"[A-Z]+[0-9:]+") as cus_request_time
+FROM `my-project-of-js.HR_system.Funding_KCP report` 
+)
+select *,
+regexp_extract(cus_request_time, r"[0-9:]+") as hour,
+regexp_contains(cus_request_time, "PM") as valid
+from cte
+;
+
+with cte as(
+select regexp_replace(Customer_Request_Open_Date, "[A-Z]+", '') as str,
+regexp_contains(Customer_Request_Open_Date, "PM") as valid,
+Customer_Request_Open_Date
+from `my-project-of-js.HR_system.Funding_KCP report` 
+),
+ct as(
+select *, 
+parse_timestamp('%Y-%m-%d %H:%M', str) as ourtime
+from cte)
+select * ,
+case when ct.valid is true then timestamp_add(ct.ourtime, interval 12 hour) else ct.ourtime end as ourtime
+from ct
